@@ -4,25 +4,24 @@
 	<title>Processa Arquivo</title>
 </head>
 <body>
-<?php 
-include_once "ProcessaCsv.php";
+<?php
+
+require_once("Progresso.php");
+require_once('ProcessaCsv.php');
 
 	echo 'Processa arquivos. => ' . $_GET['nome_arquivo'] . "</br/>";
 
-?>
-	<textarea rows="30%" cols="90%">
-<?php
-	$arquivo = $_GET['nome_arquivo'];
-
+    $arquivo = $_GET['nome_arquivo'];
+    
     $p = new ProcessaCsv();
-    $retorno = $p->validarGravar('arquivos_tmp/'. $arquivo);
+    
+    $retorno = $p->gravar(Progresso::$diretorio. $arquivo);
     if($retorno) {
-    	foreach ($retorno as &$value) {
-    		echo 'Linha:'.$value['linha'].'-Coluna:'.$value['coluna']."Valor:".$value['valor'] ; 
-    		echo "\n";
-    	}
+        foreach ($retorno as &$value) {
+            echo 'Linha:'.$value['linha'].'-Coluna:'.$value['coluna']."Valor:".$value['valor'] ; 
+            echo "<br/>";
+        }
     }
 ?>
-</textarea><br/>
 </body>
 </html>

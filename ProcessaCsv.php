@@ -9,12 +9,15 @@
  * riormente receber tratamento mais elaborado.
  * ----------------------------------------------------------------------------
  */
+require_once('Progresso.php');
+
 class ProcessaCsv {
 	
 	#atributos
 
 	public $delimitadorColuna = ',';
 	public $delimitadorTexto  = '"';
+	public $totalLinhas 	  = 0;
 	public $linhaLida         = 0;
 	public $linhaGravada      = 0;
 
@@ -44,6 +47,19 @@ class ProcessaCsv {
 		}
 	}
 
+	function contarLinhas($arquivo) {
+		$file = fopen($arquivo, 'r');
+		$this->totalLinhas = 0;
+		if($file) {
+			while(!feof($file)) {
+				$linha = fgetcsv($file,0,$this->delimitadorColuna,$this->delimitadorTexto);
+				if(!$linha) continue;
+				$this->totalLinhas++;
+			}
+		}
+		fclose($file);
+	}
+
 	function validarLinha(&$linha) {
 		#regex para validação
 		$reg_numero = "/^[0-9]+$/";
@@ -52,6 +68,8 @@ class ProcessaCsv {
 		$reg_contacorrente = "/^[0-9]+$/";
 		$reg_contra_contacorrente = "/[^0-9Xx]/";
 		$reg_texto = "/^[A-Za-z 0-9]+$/";
+
+		return -1;
 
 		for ($i=0; $i <=12 ; $i++) { 
 			if($i == 8) {
@@ -71,11 +89,14 @@ class ProcessaCsv {
 		return -1;
 	}
 
+
 	function gravar($arquivo) {
-		#Yuri Fialho (2º Ten Fialho)
-		#Confirguração abaixo colocada somente para teste, deverá ser substituido pela configuração de
-		#produção
-		$db = new PDO('mysql:host=localhost;dbname=processacsv;charset=utf8mb4', 'usuario', 'senha');
+				
+		$progresso = Progresso::getInstance();
+
+		$this->contarLinhas($arquivo);
+
+		$db = new PDO('mysql:host=localhost;dbname=sisafusex;charset=utf8mb4', 'tenfialho', 'tenfialho');
 
 		$file = fopen($arquivo, 'r');
 		$this->linhaLida = 0;
@@ -91,11 +112,9 @@ class ProcessaCsv {
         		$sql = substr($sql, 0, -1);
         		$sql.=");";
 				$resultado = $db->exec($sql);
-        		$linhaSalva++;
+        		$this->linhaGravada++;
+        		$progresso->setProgress($this->linhaGravada, $this->totalLinhas);
 			}
-
-			$sql = "insert into controle_csv(nome_arquivo) values('".$_GET['nome_arquivo']."');";
-			$db->exec($sql);
 		}
 		fclose($file);
 		return 0;
